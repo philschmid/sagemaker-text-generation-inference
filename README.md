@@ -11,6 +11,35 @@ This is a simple example of how to use the [text-generation-inference](https://g
 Check out the [sagemaker-notebook](sagemaker-notebook.ipynb) for a step-by-step guide on how to deploy BLOOM to Amazon SageMaker.
 
 
+```python
+import json
+from sagemaker.huggingface import HuggingFaceModel
+
+# Define Model and Endpoint configuration parameter
+hf_model_id = "bigscience/bloom" # model id from huggingface.co/models
+use_quantized_model = True # wether to use quantization or not
+instance_type = "ml.p4d.24xlarge" # instance type to use for deployment
+number_of_gpu = 8 # number of gpus to use for inference and tensor parallelism
+health_check_timeout = 900 # Increase the timeout for the health check to 15 minutes for downloading bloom
+
+# text-generation-inference container image uri
+image_uri="558105141721.dkr.ecr.us-east-1.amazonaws.com/sagemaker-text-generation-inference:latest"
+
+# create HuggingFaceModel with the image uri
+bloom_model = HuggingFaceModel(
+  role=role,
+  image_uri=image_uri,
+  env={
+    'HF_MODEL_ID': hf_model_id,
+    'HF_MODEL_QUANTIZE': json.dumps(use_quantized_model),
+    'SM_NUM_GPUS': json.dumps(number_of_gpu)
+  }
+)  
+# deploy endpoint
+predictor = bloom_model.deploy(1,instance_type,container_startup_health_check_timeout=health_check_timeout)
+```
+
+
 ## Get infrastructure/disk information
 
 ```python
